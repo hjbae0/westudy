@@ -3,6 +3,7 @@ import 'package:westudy/screens/admin/students_page.dart';
 import 'package:westudy/screens/admin/teachers_page.dart';
 import 'package:westudy/screens/admin/teacher_schedule_page.dart';
 import 'package:westudy/screens/admin/classes_page.dart';
+import 'package:westudy/screens/admin/classes_import_page.dart';
 import 'package:westudy/screens/admin/parents_page.dart';
 import 'package:westudy/screens/admin/reports_page.dart';
 import 'package:westudy/screens/admin/dashboard_page.dart';
@@ -214,12 +215,47 @@ class AdminShellState extends State<AdminShell> {
       case AdminPage.teachers:
         return const _TeachersTabView();
       case AdminPage.classes:
-        return const ClassesPage();
+        return const _ClassesTabView();
       case AdminPage.parents:
         return const ParentsPage();
       case AdminPage.reports:
         return const ReportsPage();
     }
+  }
+}
+
+class _ClassesTabView extends StatelessWidget {
+  const _ClassesTabView();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: const TabBar(
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppTheme.primaryColor,
+              tabs: [
+                Tab(text: '캘린더'),
+                Tab(text: '일괄관리 / 연동'),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: TabBarView(
+              children: [
+                ClassesPage(),
+                ClassesImportPage(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
