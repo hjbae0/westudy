@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:westudy/screens/student/home_screen.dart';
 import 'package:westudy/screens/student/booking_screen.dart';
 import 'package:westudy/screens/parent/parent_home_screen.dart';
+import 'package:westudy/screens/parent/report_screen.dart';
 import 'package:westudy/screens/admin/admin_home_screen.dart';
 import 'package:westudy/screens/admin/dashboard_screen.dart';
 import 'package:westudy/screens/auth/login_screen.dart';
@@ -25,7 +26,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/parent',
-      builder: (context, state) => const ParentHomeScreen(),
+      builder: (context, state) => const ParentReportScreen(),
     ),
     GoRoute(
       path: '/admin',
