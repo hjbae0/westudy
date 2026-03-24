@@ -4,6 +4,7 @@ import 'package:westudy/screens/student/home_screen.dart';
 import 'package:westudy/screens/student/booking_screen.dart';
 import 'package:westudy/screens/parent/parent_home_screen.dart';
 import 'package:westudy/screens/admin/admin_home_screen.dart';
+import 'package:westudy/screens/admin/dashboard_screen.dart';
 import 'package:westudy/screens/auth/login_screen.dart';
 import 'package:westudy/utils/theme.dart';
 
@@ -28,7 +29,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/admin',
-      builder: (context, state) => const AdminHomeScreen(),
+      builder: (context, state) => const AdminDashboardScreen(),
     ),
   ],
 );
