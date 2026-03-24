@@ -27,19 +27,22 @@ class AdminShellState extends State<AdminShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 800;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth > 800;
+    final isMedium = screenWidth > 600;
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppTheme.backgroundColor,
-      drawer: isWide ? null : _buildDrawer(),
+      drawer: !isMedium ? _buildDrawer() : null,
       body: Row(
         children: [
-          if (isWide) _buildSidebar(),
+          if (isMedium)
+            _buildSidebar(collapsed: !isWide),
           Expanded(
             child: Column(
               children: [
-                _buildTopBar(isWide),
+                _buildTopBar(!isMedium),
                 Expanded(child: _buildPage()),
               ],
             ),
@@ -49,52 +52,63 @@ class AdminShellState extends State<AdminShell> {
     );
   }
 
-  Widget _buildSidebar() {
+  Widget _buildSidebar({bool collapsed = false}) {
     return Container(
-      width: 240,
+      width: collapsed ? 64 : 240,
       color: const Color(0xFF1E293B),
       child: Column(
         children: [
           const SizedBox(height: 24),
           // 로고
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(10),
+          if (collapsed)
+            Container(
+              width: 36,
+              height: 36,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.school_rounded, color: Colors.white, size: 20),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 32),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.school_rounded, color: Colors.white, size: 20),
                   ),
-                  child: const Icon(Icons.school_rounded, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'WeStudy',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                const Spacer(),
-                const Text(
-                  'Admin',
-                  style: TextStyle(color: Colors.white38, fontSize: 11),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  const Text(
+                    'WeStudy',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const Spacer(),
+                  const Text(
+                    'Admin',
+                    style: TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-          _sidebarItem(AdminPage.dashboard, Icons.dashboard_rounded, '대시보드'),
-          _sidebarItem(AdminPage.students, Icons.school_rounded, '학생 관리'),
-          _sidebarItem(AdminPage.teachers, Icons.person_rounded, '선생님 관리'),
-          _sidebarItem(AdminPage.classes, Icons.class_rounded, '수업 관리'),
-          _sidebarItem(AdminPage.parents, Icons.family_restroom_rounded, '학부모 관리'),
-          _sidebarItem(AdminPage.reports, Icons.assessment_rounded, '리포트 관리'),
+          _sidebarItem(AdminPage.dashboard, Icons.dashboard_rounded, '대시보드', collapsed: collapsed),
+          _sidebarItem(AdminPage.students, Icons.school_rounded, '학생 관리', collapsed: collapsed),
+          _sidebarItem(AdminPage.teachers, Icons.person_rounded, '선생님 관리', collapsed: collapsed),
+          _sidebarItem(AdminPage.classes, Icons.class_rounded, '수업 관리', collapsed: collapsed),
+          _sidebarItem(AdminPage.parents, Icons.family_restroom_rounded, '학부모 관리', collapsed: collapsed),
+          _sidebarItem(AdminPage.reports, Icons.assessment_rounded, '리포트 관리', collapsed: collapsed),
           const Spacer(),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'v1.0.0',
+              collapsed ? 'v1' : 'v1.0.0',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 11),
             ),
           ),
@@ -103,34 +117,39 @@ class AdminShellState extends State<AdminShell> {
     );
   }
 
-  Widget _sidebarItem(AdminPage page, IconData icon, String label) {
+  Widget _sidebarItem(AdminPage page, IconData icon, String label, {bool collapsed = false}) {
     final isSelected = _currentPage == page;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 12, vertical: 2),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => setState(() => _currentPage = page),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, color: isSelected ? Colors.white : Colors.white54, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white54,
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ],
+        child: Tooltip(
+          message: collapsed ? label : '',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => setState(() => _currentPage = page),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: collapsed ? 0 : 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: collapsed
+                  ? Center(child: Icon(icon, color: isSelected ? Colors.white : Colors.white54, size: 22))
+                  : Row(
+                      children: [
+                        Icon(icon, color: isSelected ? Colors.white : Colors.white54, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white54,
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -145,7 +164,7 @@ class AdminShellState extends State<AdminShell> {
     );
   }
 
-  Widget _buildTopBar(bool isWide) {
+  Widget _buildTopBar(bool showMenu) {
     final titles = {
       AdminPage.dashboard: '대시보드',
       AdminPage.students: '학생 관리',
@@ -164,7 +183,7 @@ class AdminShellState extends State<AdminShell> {
       ),
       child: Row(
         children: [
-          if (!isWide)
+          if (showMenu)
             IconButton(
               icon: const Icon(Icons.menu),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
