@@ -3,6 +3,7 @@ import 'package:westudy/screens/admin/students_page.dart';
 import 'package:westudy/screens/admin/teachers_page.dart';
 import 'package:westudy/screens/admin/teacher_schedule_page.dart';
 import 'package:westudy/screens/admin/classes_page.dart';
+import 'package:westudy/screens/admin/parents_page.dart';
 import 'package:westudy/utils/theme.dart';
 
 enum AdminPage { dashboard, students, teachers, classes, parents, reports }
@@ -194,7 +195,7 @@ class AdminShellState extends State<AdminShell> {
       case AdminPage.classes:
         return const ClassesPage();
       case AdminPage.parents:
-        return const _Placeholder('학부모 관리');
+        return const ParentsPage();
       case AdminPage.reports:
         return const _Placeholder('리포트 관리');
     }
