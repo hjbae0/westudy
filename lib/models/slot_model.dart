@@ -6,7 +6,9 @@ class SlotModel {
   final DateTime endTime;
   final int maxStudents;
   final int currentStudents;
-  final bool isAvailable;
+  final String status; // available, booked, blocked
+  final String? subject;
+  final String? teacherName;
 
   SlotModel({
     required this.id,
@@ -14,8 +16,12 @@ class SlotModel {
     required this.endTime,
     required this.maxStudents,
     required this.currentStudents,
-    required this.isAvailable,
+    required this.status,
+    this.subject,
+    this.teacherName,
   });
+
+  bool get isAvailable => status == 'available' && currentStudents < maxStudents;
 
   factory SlotModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -25,7 +31,9 @@ class SlotModel {
       endTime: (data['endTime'] as Timestamp).toDate(),
       maxStudents: data['maxStudents'] ?? 0,
       currentStudents: data['currentStudents'] ?? 0,
-      isAvailable: data['isAvailable'] ?? true,
+      status: data['status'] ?? 'available',
+      subject: data['subject'],
+      teacherName: data['teacherName'],
     );
   }
 
@@ -35,7 +43,9 @@ class SlotModel {
       'endTime': Timestamp.fromDate(endTime),
       'maxStudents': maxStudents,
       'currentStudents': currentStudents,
-      'isAvailable': isAvailable,
+      'status': status,
+      'subject': subject,
+      'teacherName': teacherName,
     };
   }
 }
