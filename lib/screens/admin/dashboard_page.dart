@@ -131,72 +131,80 @@ class _WeeklyClassChart extends StatelessWidget {
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('이번 주 수업 수', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 20),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection(AppConstants.bookingsCollection)
-                .where('bookedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monday))
-                .where('bookedAt', isLessThan: Timestamp.fromDate(monday.add(const Duration(days: 7))))
-                .where('status', whereIn: ['confirmed', 'completed'])
-                .snapshots(),
-            builder: (context, snapshot) {
-              // 요일별 카운트
-              final counts = List.filled(7, 0);
-              for (final doc in snapshot.data?.docs ?? []) {
-                final d = doc.data() as Map<String, dynamic>;
-                final dt = (d['bookedAt'] as Timestamp?)?.toDate();
-                if (dt != null) {
-                  final dayIndex = dt.weekday - 1;
-                  if (dayIndex >= 0 && dayIndex < 7) counts[dayIndex]++;
-                }
-              }
-              final maxCount = counts.reduce(max).clamp(1, 999);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 300),
+      child: Container(
+        height: 300,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('이번 주 수업 수', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection(AppConstants.bookingsCollection)
+                    .where('bookedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monday))
+                    .where('bookedAt', isLessThan: Timestamp.fromDate(monday.add(const Duration(days: 7))))
+                    .where('status', whereIn: ['confirmed', 'completed'])
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  final counts = List.filled(7, 0);
+                  for (final doc in snapshot.data?.docs ?? []) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    final dt = (d['bookedAt'] as Timestamp?)?.toDate();
+                    if (dt != null) {
+                      final dayIndex = dt.weekday - 1;
+                      if (dayIndex >= 0 && dayIndex < 7) counts[dayIndex]++;
+                    }
+                  }
 
-              return SizedBox(
-                height: 180,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(7, (i) {
-                    final isToday = weekDays[i].day == now.day && weekDays[i].month == now.month;
-                    final ratio = counts[i] / maxCount;
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text('${counts[i]}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isToday ? AppTheme.primaryColor : Colors.grey.shade600)),
-                            const SizedBox(height: 4),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 500),
-                              height: max(4, ratio * 140),
-                              decoration: BoxDecoration(
-                                color: isToday ? AppTheme.primaryColor : AppTheme.primaryColor.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(4),
+                  final total = counts.fold(0, (a, b) => a + b);
+                  if (total == 0) {
+                    return _emptyState(Icons.bar_chart_rounded, '아직 수업 데이터가 없습니다');
+                  }
+
+                  final maxCount = counts.reduce(max).clamp(1, 999);
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List.generate(7, (i) {
+                      final isToday = weekDays[i].day == now.day && weekDays[i].month == now.month;
+                      final ratio = counts[i] / maxCount;
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text('${counts[i]}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isToday ? AppTheme.primaryColor : Colors.grey.shade600)),
+                              const SizedBox(height: 4),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 500),
+                                height: max(4, ratio * 140),
+                                decoration: BoxDecoration(
+                                  color: isToday ? AppTheme.primaryColor : AppTheme.primaryColor.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              DateFormat('E', 'ko_KR').format(weekDays[i]),
-                              style: TextStyle(fontSize: 11, color: isToday ? AppTheme.primaryColor : Colors.grey.shade500),
-                            ),
-                          ],
+                              const SizedBox(height: 6),
+                              Text(
+                                DateFormat('E', 'ko_KR').format(weekDays[i]),
+                                style: TextStyle(fontSize: 11, color: isToday ? AppTheme.primaryColor : Colors.grey.shade500),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }),
-                ),
-              );
-            },
-          ),
-        ],
+                      );
+                    }),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -214,74 +222,75 @@ class _SubjectPieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('과목별 분포', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 20),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection(AppConstants.bookingsCollection)
-                .where('status', whereIn: ['confirmed', 'completed'])
-                .snapshots(),
-            builder: (context, snapshot) {
-              final subjectCounts = <String, int>{};
-              for (final doc in snapshot.data?.docs ?? []) {
-                final d = doc.data() as Map<String, dynamic>;
-                final subject = (d['subject'] ?? '기타').toString();
-                subjectCounts[subject] = (subjectCounts[subject] ?? 0) + 1;
-              }
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 300),
+      child: Container(
+        height: 300,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('과목별 분포', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection(AppConstants.bookingsCollection)
+                    .where('status', whereIn: ['confirmed', 'completed'])
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  final subjectCounts = <String, int>{};
+                  for (final doc in snapshot.data?.docs ?? []) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    final subject = (d['subject'] ?? '기타').toString();
+                    subjectCounts[subject] = (subjectCounts[subject] ?? 0) + 1;
+                  }
 
-              if (subjectCounts.isEmpty) {
-                return SizedBox(
-                  height: 200,
-                  child: Center(child: Text('데이터 없음', style: TextStyle(color: Colors.grey.shade400))),
-                );
-              }
+                  if (subjectCounts.isEmpty) {
+                    return _emptyState(Icons.pie_chart_rounded, '아직 과목 데이터가 없습니다');
+                  }
 
-              final total = subjectCounts.values.fold(0, (a, b) => a + b);
-              final entries = subjectCounts.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value));
+                  final total = subjectCounts.values.fold(0, (a, b) => a + b);
+                  final entries = subjectCounts.entries.toList()
+                    ..sort((a, b) => b.value.compareTo(a.value));
 
-              return Column(
-                children: [
-                  // 커스텀 파이 차트
-                  SizedBox(
-                    height: 160,
-                    width: 160,
-                    child: CustomPaint(
-                      painter: _PieChartPainter(entries, total, _colors),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // 범례
-                  ...entries.asMap().entries.map((e) {
-                    final idx = e.key;
-                    final entry = e.value;
-                    final pct = (entry.value / total * 100).round();
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 10, height: 10,
-                            decoration: BoxDecoration(color: _colors[idx % _colors.length], borderRadius: BorderRadius.circular(2)),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(entry.key, style: const TextStyle(fontSize: 12))),
-                          Text('$pct%', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                        ],
+                  return Column(
+                    children: [
+                      SizedBox(
+                        height: 120,
+                        width: 120,
+                        child: CustomPaint(
+                          painter: _PieChartPainter(entries, total, _colors),
+                        ),
                       ),
-                    );
-                  }),
-                ],
-              );
-            },
-          ),
-        ],
+                      const SizedBox(height: 12),
+                      ...entries.take(5).toList().asMap().entries.map((e) {
+                        final idx = e.key;
+                        final entry = e.value;
+                        final pct = (entry.value / total * 100).round();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10, height: 10,
+                                decoration: BoxDecoration(color: _colors[idx % _colors.length], borderRadius: BorderRadius.circular(2)),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(entry.key, style: const TextStyle(fontSize: 12))),
+                              Text('$pct%', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -346,7 +355,7 @@ class _TodayClassesTable extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-            child: Center(child: Text('오늘 수업이 없습니다.', style: TextStyle(color: Colors.grey.shade500))),
+            child: _emptyState(Icons.event_note_rounded, '오늘 예정된 수업이 없습니다'),
           );
         }
 
@@ -407,6 +416,21 @@ class _TodayClassesTable extends StatelessWidget {
   static Widget _hdr(String t, int f) => Expanded(flex: f, child: Text(t, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.onSurfaceColor.withValues(alpha: 0.6))));
   static Widget _cell(String t, int f) => Expanded(flex: f, child: Text(t, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis));
   static String _trunc(String s, int m) => s.length > m ? '${s.substring(0, m)}...' : s;
+}
+
+Widget _emptyState(IconData icon, String message) {
+  return Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 40, color: Colors.grey.shade300),
+        const SizedBox(height: 10),
+        Text(message, style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+        const SizedBox(height: 4),
+        Text('데이터를 추가해주세요', style: TextStyle(fontSize: 11, color: Colors.grey.shade300)),
+      ],
+    ),
+  );
 }
 
 class _MetricData {
