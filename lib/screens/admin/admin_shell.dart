@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:westudy/screens/admin/students_page.dart';
 import 'package:westudy/utils/theme.dart';
 
 enum AdminPage { dashboard, students, teachers, classes, parents, reports }
@@ -184,7 +185,7 @@ class AdminShellState extends State<AdminShell> {
       case AdminPage.dashboard:
         return const _Placeholder('대시보드');
       case AdminPage.students:
-        return const _Placeholder('학생 관리');
+        return const StudentsPage();
       case AdminPage.teachers:
         return const _Placeholder('선생님 관리');
       case AdminPage.classes:
