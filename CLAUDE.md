@@ -2,69 +2,81 @@
 
 ## 프로젝트 개요
 - **이름**: WeStudy (위스터디) - 학생/학부모/관리자 학습 관리 플랫폼
-- **스택**: Flutter Web + Firebase (Auth, Firestore, Hosting, Cloud Functions)
-- **배포**: Firebase Hosting (`firebase deploy --only hosting`)
+- **스택**: Flutter (Web/Android/iOS) + Firebase (Auth, Firestore, Hosting, Cloud Functions)
+- **라이브 URL**: https://westudy-bfcb4.web.app
+- **GitHub**: https://github.com/hjbae0/westudy
+- **Firebase 프로젝트**: westudy-bfcb4
 
 ## 프로젝트 구조
 ```
 lib/
   main.dart                    # Firebase 초기화 + 앱 실행
-  app.dart                     # GoRouter + Provider + 라우트 가드
-  firebase_options.dart        # Firebase 설정 (flutterfire configure로 생성)
+  app.dart                     # GoRouter + Provider + 라우트 가드 (kDevMode)
+  firebase_options.dart        # Firebase 설정 (flutterfire configure로 교체)
   models/                      # 데이터 모델 (fromFirestore/toFirestore)
-    user_model.dart            # 사용자 (role: student/parent/admin)
-    booking_model.dart         # 예약 (LMT 포함)
+    user_model.dart            # 사용자 (role, parentId, childrenIds)
+    booking_model.dart         # 예약 (subject, teacherName, lmtUsed)
     slot_model.dart            # 30분 슬롯 (available/booked/blocked)
     report_model.dart          # 학습 리포트
     notification_model.dart    # 알림
   services/
-    auth_service.dart          # Firebase Auth + Firestore 프로필 관리
-    booking_service.dart       # 예약 CRUD (트랜잭션)
+    auth_service.dart          # Firebase Auth + Firestore 프로필 + Provider
+    booking_service.dart       # 예약 CRUD (Firestore 트랜잭션)
     slot_service.dart          # 슬롯 생성/조회/차단
     lmt_service.dart           # 긴급변경권 (주 3회 제한)
     parent_service.dart        # 학부모-학생 연결
+    ai_service.dart            # AI 자연어 스케줄링
   screens/
     auth/login_screen.dart     # 카카오/네이버/Google/이메일 로그인
     student/
-      home_screen.dart         # 홈 (수업목록 + 주간캘린더 + 빠른메뉴)
-      booking_screen.dart      # Calendly 스타일 예약
+      home_screen.dart         # 홈 (수업목록 + 주간캘린더 + 빠른메뉴 + 5탭)
+      booking_screen.dart      # Calendly 스타일 예약 (Firestore 연동)
       change_screen.dart       # LMT 긴급변경
+      ai_chat_screen.dart      # AI 채팅 (자연어 예약/조회/추천)
     parent/report_screen.dart  # 학습 리포트 (진도바)
-    admin/dashboard_screen.dart # 대시보드 (Firestore 실시간)
+    admin/dashboard_screen.dart # 대시보드 (Firestore 실시간 지표+테이블)
   utils/
-    theme.dart                 # 배경색 #F8F6F3
+    theme.dart                 # 배경색 #F8F6F3, 프라이머리 #4A6FA5
     constants.dart             # Firestore 컬렉션명, 역할, 라우트
-  widgets/                     # 공통 위젯
 functions/
-  src/notification/            # 솔라피 알림톡 (솔라피 API)
+  src/notification/            # 솔라피 알림톡 (4개 템플릿)
   src/booking/                 # 예약 트리거 (onCreate/onUpdate/onCancel)
-firestore.rules                # 역할 기반 보안 규칙
+firestore.rules                # 역할 기반 보안 규칙 (isParentOf 포함)
 firebase.json                  # Hosting + Firestore + Functions 설정
 ```
 
-## 핵심 기능
-- **인증**: 카카오/네이버(Custom Token 예정), Google, 이메일/비밀번호
-- **예약**: Firestore 트랜잭션 기반, 슬롯 잔여석 검증, 중복 방지
-- **LMT**: 긴급변경권 주 3회, 소진 시 경고/거부
-- **라우트 가드**: 인증 상태 + 역할별 자동 리디렉트 (kDevMode로 개발 중 우회)
-- **학부모**: parentId/childrenIds 양방향 연결, 자녀 데이터 조회
+## 완료된 기능
+- **인증**: Google (signInWithPopup), 이메일/비밀번호 (가입+로그인), 카카오/네이버 (UI 준비, Custom Token 예정)
+- **예약**: Firestore 트랜잭션, 슬롯 잔여석 검증, 중복 방지, Calendly 스타일 UI
+- **LMT**: 긴급변경권 주 3회, 소진 시 경고/거부, UI + 서비스 완료
+- **AI 스케줄러**: 자연어 의도 파싱 (예약/취소/변경/조회), 빈 슬롯 검색, 최적 시간 추천, 실기 시간 자동 제외
+- **라우트 가드**: 인증 상태 + 역할별 자동 리디렉트
+- **학부모**: parentId/childrenIds 양방향 연결, Firestore rules 학부모 접근 허용
+- **관리자**: 실시간 대시보드 (오늘수업/등록학생/출석률/이번달 예약)
+- **알림톡**: 솔라피 Cloud Functions (예약확인/리마인더/취소/주간리포트)
+- **빌드**: Web 배포 완료, Android APK 빌드 완료, iOS 설정 완료
+- **테스트**: BookingModel + SlotModel + LMT 로직 테스트 (13/13 passed)
 
 ## 빌드/배포 명령
 ```bash
 flutter pub get                          # 의존성 설치
 flutter build web --release              # 웹 빌드
 flutter run -d chrome                    # 로컬 실행
+flutter build apk --debug                # Android APK
+flutter build ios --no-codesign          # iOS (Xcode 필요)
 firebase deploy --only hosting           # Hosting 배포
 firebase deploy --only firestore:rules   # 보안 규칙 배포
 firebase deploy --only functions         # Cloud Functions 배포
 ```
 
 ## 다음 단계 (TODO)
-- [ ] Firebase 프로젝트 생성 + flutterfire configure
+- [ ] flutterfire configure로 firebase_options.dart 실제 값 설정
 - [ ] 카카오/네이버 Custom Token 연동 (Cloud Functions)
 - [ ] kDevMode를 false로 전환 (프로덕션)
-- [ ] 알림톡 솔라피 API 키 설정
+- [ ] 솔라피 API 키 설정 (firebase functions:config:set)
 - [ ] 학부모 자녀 연결 UI
+- [ ] 음성 입력 연동 (speech_to_text)
+- [ ] 푸시 알림 (FCM)
 
 ---
 
