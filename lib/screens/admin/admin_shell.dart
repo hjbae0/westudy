@@ -6,10 +6,11 @@ import 'package:westudy/screens/admin/classes_page.dart';
 import 'package:westudy/screens/admin/classes_import_page.dart';
 import 'package:westudy/screens/admin/parents_page.dart';
 import 'package:westudy/screens/admin/reports_page.dart';
+import 'package:westudy/screens/admin/billing_page.dart';
 import 'package:westudy/screens/admin/dashboard_page.dart';
 import 'package:westudy/utils/theme.dart';
 
-enum AdminPage { dashboard, students, teachers, classes, parents, reports }
+enum AdminPage { dashboard, students, teachers, classes, parents, billing, reports }
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -104,6 +105,7 @@ class AdminShellState extends State<AdminShell> {
           _sidebarItem(AdminPage.teachers, Icons.person_rounded, '선생님 관리', collapsed: collapsed),
           _sidebarItem(AdminPage.classes, Icons.class_rounded, '수업 관리', collapsed: collapsed),
           _sidebarItem(AdminPage.parents, Icons.family_restroom_rounded, '학부모 관리', collapsed: collapsed),
+          _sidebarItem(AdminPage.billing, Icons.receipt_long_rounded, '정산 관리', collapsed: collapsed),
           _sidebarItem(AdminPage.reports, Icons.assessment_rounded, '리포트 관리', collapsed: collapsed),
           const Spacer(),
           Padding(
@@ -172,6 +174,7 @@ class AdminShellState extends State<AdminShell> {
       AdminPage.teachers: '선생님 관리',
       AdminPage.classes: '수업 관리',
       AdminPage.parents: '학부모 관리',
+      AdminPage.billing: '정산 관리',
       AdminPage.reports: '리포트 관리',
     };
 
@@ -218,9 +221,54 @@ class AdminShellState extends State<AdminShell> {
         return const _ClassesTabView();
       case AdminPage.parents:
         return const ParentsPage();
+      case AdminPage.billing:
+        return const _BillingTabView();
       case AdminPage.reports:
         return const ReportsPage();
     }
+  }
+}
+
+class _BillingTabView extends StatelessWidget {
+  const _BillingTabView();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 5,
+      child: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: const TabBar(
+              isScrollable: true,
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppTheme.primaryColor,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                Tab(text: '수납 관리'),
+                Tab(text: '입금 관리'),
+                Tab(text: '월별 정산'),
+                Tab(text: '부가세'),
+                Tab(text: '카드 매출'),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: TabBarView(
+              children: [
+                TuitionPage(),
+                PaymentPage(),
+                MonthlySettlementPage(),
+                VatPage(),
+                CardSalesPage(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
