@@ -5,6 +5,7 @@ import 'package:westudy/screens/admin/teacher_schedule_page.dart';
 import 'package:westudy/screens/admin/classes_page.dart';
 import 'package:westudy/screens/admin/parents_page.dart';
 import 'package:westudy/screens/admin/reports_page.dart';
+import 'package:westudy/screens/admin/dashboard_page.dart';
 import 'package:westudy/utils/theme.dart';
 
 enum AdminPage { dashboard, students, teachers, classes, parents, reports }
@@ -188,7 +189,7 @@ class AdminShellState extends State<AdminShell> {
     // 여기서는 placeholder, 각 커밋에서 실제 위젯으로 교체
     switch (_currentPage) {
       case AdminPage.dashboard:
-        return const _Placeholder('대시보드');
+        return const DashboardPage();
       case AdminPage.students:
         return const StudentsPage();
       case AdminPage.teachers:
