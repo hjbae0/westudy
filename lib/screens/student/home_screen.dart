@@ -265,23 +265,22 @@ class _WeekCalendar extends StatelessWidget {
     final weekDays = List.generate(5, (i) => monday.add(Duration(days: i)));
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return _buildEmptyCalendar(weekDays, now);
-
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection(AppConstants.bookingsCollection)
-          .where('studentId', isEqualTo: user.uid)
-          .where('status', whereIn: ['confirmed', 'completed'])
-          .where('bookedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monday))
-          .where('bookedAt', isLessThan: Timestamp.fromDate(friday))
-          .snapshots(),
+      stream: user != null
+          ? FirebaseFirestore.instance
+              .collection(AppConstants.bookingsCollection)
+              .where('studentId', isEqualTo: user.uid)
+              .where('status', whereIn: ['confirmed', 'completed'])
+              .where('bookedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monday))
+              .where('bookedAt', isLessThan: Timestamp.fromDate(friday))
+              .snapshots()
+          : null,
       builder: (context, snapshot) {
         final bookings = snapshot.data?.docs
                 .map((doc) => BookingModel.fromFirestore(doc))
                 .toList() ??
             [];
 
-        // 요일별로 그룹핑
         final Map<int, List<BookingModel>> weekBookings = {};
         for (final b in bookings) {
           final weekday = b.bookedAt.weekday;
@@ -293,17 +292,12 @@ class _WeekCalendar extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyCalendar(List<DateTime> weekDays, DateTime now) {
-    return _buildCalendarBody(null, weekDays, now, {});
-  }
-
   Widget _buildCalendarBody(
-    BuildContext? ctx,
+    BuildContext context,
     List<DateTime> weekDays,
     DateTime now,
     Map<int, List<BookingModel>> weekBookings,
   ) {
-    final context = ctx ?? weekDays.first as dynamic; // fallback
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -321,7 +315,7 @@ class _WeekCalendar extends StatelessWidget {
                 _buildTimeLabels(),
                 ...weekDays.map((day) => Expanded(
                       child: _buildDayColumn(
-                        ctx!,
+                        context,
                         day,
                         now,
                         weekBookings[day.weekday] ?? [],
