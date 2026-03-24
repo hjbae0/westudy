@@ -3,11 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:westudy/screens/student/student_home_screen.dart';
 import 'package:westudy/screens/parent/parent_home_screen.dart';
 import 'package:westudy/screens/admin/admin_home_screen.dart';
+import 'package:westudy/screens/auth/login_screen.dart';
 import 'package:westudy/utils/theme.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/student',
+  initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     GoRoute(
       path: '/student',
       builder: (context, state) => const StudentHomeScreen(),
