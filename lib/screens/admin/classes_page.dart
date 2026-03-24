@@ -342,21 +342,29 @@ class _ClassesPageState extends State<ClassesPage> {
                     ...weekDays.map((day) {
                       final classes = dayBookings[day.weekday] ?? [];
                       return Expanded(
-                        child: GestureDetector(
-                          onTap: () => showClassForm(context, initialDate: day),
-                          child: Stack(
-                            children: [
-                              // 시간선
-                              Column(
-                                children: List.generate(endHour - startHour, (i) => Container(
-                                  height: hourHeight,
-                                  decoration: BoxDecoration(border: Border(
-                                    top: BorderSide(color: Colors.grey.shade100, width: 0.5),
-                                    left: BorderSide(color: Colors.grey.shade100, width: 0.5),
-                                  )),
-                                )),
-                              ),
-                              // 수업 블록
+                        child: DragTarget<Map<String, dynamic>>(
+                          onAcceptWithDetails: (details) {
+                            _handleDrop(context, details.data, day, details.offset, startHour, hourHeight);
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            final isDropTarget = candidateData.isNotEmpty;
+                            return GestureDetector(
+                              onTap: () => showClassForm(context, initialDate: day),
+                              child: Container(
+                                color: isDropTarget ? AppTheme.primaryColor.withValues(alpha: 0.05) : null,
+                                child: Stack(
+                                  children: [
+                                    // 시간선
+                                    Column(
+                                      children: List.generate(endHour - startHour, (i) => Container(
+                                        height: hourHeight,
+                                        decoration: BoxDecoration(border: Border(
+                                          top: BorderSide(color: Colors.grey.shade100, width: 0.5),
+                                          left: BorderSide(color: Colors.grey.shade100, width: 0.5),
+                                        )),
+                                      )),
+                                    ),
+                              // 수업 블록 (드래그 가능)
                               ...classes.map((doc) {
                                 final d = doc.data() as Map<String, dynamic>;
                                 final dt = (d['bookedAt'] as Timestamp).toDate();
@@ -364,30 +372,44 @@ class _ClassesPageState extends State<ClassesPage> {
                                 final top = minutes * hourHeight / 60;
                                 final color = _subjectColor(d['subject'] ?? '');
 
+                                final blockWidget = Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: color.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border(left: BorderSide(color: color, width: 3)),
+                                  ),
+                                  child: Text(
+                                    '${d['subject'] ?? ''} ${DateFormat('HH:mm').format(dt)}',
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+
                                 return Positioned(
                                   top: top.clamp(0, (endHour - startHour) * hourHeight - 30),
                                   left: 2, right: 2,
                                   height: 28,
-                                  child: GestureDetector(
-                                    onTap: () => _showClassDetail(context, doc.id, d),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: color.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border(left: BorderSide(color: color, width: 3)),
-                                      ),
-                                      child: Text(
-                                        '${d['subject'] ?? ''} ${DateFormat('HH:mm').format(dt)}',
-                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
-                                        maxLines: 1, overflow: TextOverflow.ellipsis,
-                                      ),
+                                  child: Draggable<Map<String, dynamic>>(
+                                    data: {'docId': doc.id, ...d},
+                                    feedback: Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: SizedBox(width: 100, height: 28, child: blockWidget),
+                                    ),
+                                    childWhenDragging: Opacity(opacity: 0.3, child: blockWidget),
+                                    child: GestureDetector(
+                                      onTap: () => _showClassDetail(context, doc.id, d),
+                                      child: blockWidget,
                                     ),
                                   ),
                                 );
                               }),
-                            ],
-                          ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       );
                     }),
@@ -399,6 +421,54 @@ class _ClassesPageState extends State<ClassesPage> {
         );
       },
     );
+  }
+
+  // 드래그앤드롭 처리: 수업 시간 변경
+  void _handleDrop(BuildContext context, Map<String, dynamic> data, DateTime targetDay, Offset dropOffset, int startHour, double hourHeight) async {
+    final docId = data['docId'] as String?;
+    if (docId == null) return;
+
+    // 드롭 위치에서 시간 계산 (대략적)
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    final localOffset = renderBox.globalToLocal(dropOffset);
+    final minutesFromStart = (localOffset.dy / hourHeight * 60).round();
+    final hour = startHour + minutesFromStart ~/ 60;
+    final minute = (minutesFromStart % 60 ~/ 30) * 30; // 30분 단위 스냅
+
+    final newTime = DateTime(targetDay.year, targetDay.month, targetDay.day, hour.clamp(startHour, 20), minute);
+    final timeStr = DateFormat('M/d (E) HH:mm', 'ko_KR').format(newTime);
+
+    // 확인 다이얼로그
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('수업 시간 변경'),
+        content: Text('${data['subject'] ?? '수업'}을(를)\n$timeStr(으)로 변경할까요?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
+            child: const Text('변경'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await FirebaseFirestore.instance
+          .collection(AppConstants.bookingsCollection)
+          .doc(docId)
+          .update({'bookedAt': Timestamp.fromDate(newTime)});
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('수업이 $timeStr(으)로 변경되었습니다.')),
+        );
+      }
+    }
   }
 
   void _showClassDetail(BuildContext context, String id, Map<String, dynamic> data) {
