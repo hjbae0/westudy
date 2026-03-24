@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:westudy/models/booking_model.dart';
+import 'package:westudy/utils/constants.dart';
 import 'package:westudy/utils/theme.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -231,40 +235,75 @@ class _HomeTab extends StatelessWidget {
   }
 }
 
-// 이번 주 캘린더 (Calendly 스타일 타임라인)
+// 이번 주 캘린더 (Calendly 스타일 타임라인 - Firestore 연동)
 class _WeekCalendar extends StatelessWidget {
-  // 데모 데이터: 요일별 수업
-  static final Map<int, List<_ClassSlot>> _weekClasses = {
-    DateTime.monday: [
-      _ClassSlot('수학 심화', '14:00', '15:00', Colors.blue),
-      _ClassSlot('영어 독해', '16:00', '17:00', Colors.orange),
-    ],
-    DateTime.tuesday: [
-      _ClassSlot('국어 문학', '10:00', '11:00', Colors.green),
-    ],
-    DateTime.wednesday: [
-      _ClassSlot('수학 심화', '14:00', '15:00', Colors.blue),
-      _ClassSlot('과학 실험', '16:00', '17:00', Colors.purple),
-      _ClassSlot('영어 회화', '18:00', '19:00', Colors.orange),
-    ],
-    DateTime.thursday: [],
-    DateTime.friday: [
-      _ClassSlot('영어 독해', '15:00', '16:00', Colors.orange),
-      _ClassSlot('국어 문학', '18:00', '19:00', Colors.green),
-    ],
-  };
-
-  // 타임라인 범위
   static const int _startHour = 9;
   static const int _endHour = 21;
   static const double _hourHeight = 40.0;
+
+  // 과목별 컬러
+  static const Map<String, Color> _subjectColors = {
+    '수학': Colors.blue,
+    '영어': Colors.orange,
+    '국어': Colors.green,
+    '과학': Colors.purple,
+    '사회': Colors.teal,
+  };
+
+  static Color _colorForSubject(String subject) {
+    for (final entry in _subjectColors.entries) {
+      if (subject.contains(entry.key)) return entry.value;
+    }
+    return AppTheme.primaryColor;
+  }
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
+    final friday = monday.add(const Duration(days: 5));
     final weekDays = List.generate(5, (i) => monday.add(Duration(days: i)));
+    final user = FirebaseAuth.instance.currentUser;
 
+    if (user == null) return _buildEmptyCalendar(weekDays, now);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection(AppConstants.bookingsCollection)
+          .where('studentId', isEqualTo: user.uid)
+          .where('status', whereIn: ['confirmed', 'completed'])
+          .where('bookedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monday))
+          .where('bookedAt', isLessThan: Timestamp.fromDate(friday))
+          .snapshots(),
+      builder: (context, snapshot) {
+        final bookings = snapshot.data?.docs
+                .map((doc) => BookingModel.fromFirestore(doc))
+                .toList() ??
+            [];
+
+        // 요일별로 그룹핑
+        final Map<int, List<BookingModel>> weekBookings = {};
+        for (final b in bookings) {
+          final weekday = b.bookedAt.weekday;
+          weekBookings.putIfAbsent(weekday, () => []).add(b);
+        }
+
+        return _buildCalendarBody(context, weekDays, now, weekBookings);
+      },
+    );
+  }
+
+  Widget _buildEmptyCalendar(List<DateTime> weekDays, DateTime now) {
+    return _buildCalendarBody(null, weekDays, now, {});
+  }
+
+  Widget _buildCalendarBody(
+    BuildContext? ctx,
+    List<DateTime> weekDays,
+    DateTime now,
+    Map<int, List<BookingModel>> weekBookings,
+  ) {
+    final context = ctx ?? weekDays.first as dynamic; // fallback
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -272,20 +311,21 @@ class _WeekCalendar extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 요일 헤더
           _buildDayHeader(weekDays, now),
           const Divider(height: 1),
-          // 타임라인 본체
           SizedBox(
             height: (_endHour - _startHour) * _hourHeight,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 시간 라벨
                 _buildTimeLabels(),
-                // 5개 요일 열
                 ...weekDays.map((day) => Expanded(
-                      child: _buildDayColumn(context, day, now),
+                      child: _buildDayColumn(
+                        ctx!,
+                        day,
+                        now,
+                        weekBookings[day.weekday] ?? [],
+                      ),
                     )),
               ],
             ),
@@ -300,7 +340,7 @@ class _WeekCalendar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          const SizedBox(width: 36), // 시간 라벨 영역
+          const SizedBox(width: 36),
           ...weekDays.map((day) {
             final isToday = day.year == now.year &&
                 day.month == now.month &&
@@ -373,14 +413,16 @@ class _WeekCalendar extends StatelessWidget {
     );
   }
 
-  Widget _buildDayColumn(BuildContext context, DateTime day, DateTime now) {
-    final classes = _weekClasses[day.weekday] ?? [];
+  Widget _buildDayColumn(
+    BuildContext context,
+    DateTime day,
+    DateTime now,
+    List<BookingModel> bookings,
+  ) {
     final isPast = day.isBefore(DateTime(now.year, now.month, now.day));
 
     return GestureDetector(
-      onTap: isPast
-          ? null
-          : () => context.go('/student/booking'),
+      onTap: isPast ? null : () => context.go('/student/booking'),
       child: Stack(
         children: [
           // 시간 구분선
@@ -397,12 +439,17 @@ class _WeekCalendar extends StatelessWidget {
               );
             }),
           ),
-          // 수업 블록
-          ...classes.map((cls) {
-            final startMinutes = _parseMinutes(cls.start) - (_startHour * 60);
-            final endMinutes = _parseMinutes(cls.end) - (_startHour * 60);
+          // Firestore 예약 블록
+          ...bookings.map((booking) {
+            final startMinutes =
+                booking.bookedAt.hour * 60 + booking.bookedAt.minute - (_startHour * 60);
+            // 30분 수업 기본
+            const durationMinutes = 30;
             final top = startMinutes * _hourHeight / 60;
-            final height = (endMinutes - startMinutes) * _hourHeight / 60;
+            final height = durationMinutes * _hourHeight / 60;
+            final color = _colorForSubject(booking.subject);
+
+            if (top < 0) return const SizedBox.shrink();
 
             return Positioned(
               top: top,
@@ -411,10 +458,10 @@ class _WeekCalendar extends StatelessWidget {
               height: height,
               child: Container(
                 decoration: BoxDecoration(
-                  color: cls.color.withValues(alpha: 0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                   border: Border(
-                    left: BorderSide(color: cls.color, width: 2.5),
+                    left: BorderSide(color: color, width: 2.5),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -422,20 +469,20 @@ class _WeekCalendar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      cls.subject,
+                      booking.subject,
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: cls.color.withValues(alpha: 0.9),
+                        color: color.withValues(alpha: 0.9),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      cls.start,
+                      DateFormat('HH:mm').format(booking.bookedAt),
                       style: TextStyle(
                         fontSize: 8,
-                        color: cls.color.withValues(alpha: 0.7),
+                        color: color.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -447,19 +494,6 @@ class _WeekCalendar extends StatelessWidget {
       ),
     );
   }
-
-  int _parseMinutes(String time) {
-    final parts = time.split(':');
-    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
-  }
-}
-
-class _ClassSlot {
-  final String subject;
-  final String start;
-  final String end;
-  final Color color;
-  const _ClassSlot(this.subject, this.start, this.end, this.color);
 }
 
 // 일정 탭 (placeholder)
