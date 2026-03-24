@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:westudy/screens/student/home_screen.dart';
+import 'package:westudy/screens/student/booking_screen.dart';
 import 'package:westudy/screens/parent/parent_home_screen.dart';
 import 'package:westudy/screens/admin/admin_home_screen.dart';
 import 'package:westudy/screens/auth/login_screen.dart';
@@ -16,6 +17,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/student',
       builder: (context, state) => const StudentHomeScreen(),
+    ),
+    GoRoute(
+      path: '/student/booking',
+      builder: (context, state) => const BookingScreen(),
     ),
     GoRoute(
       path: '/parent',
