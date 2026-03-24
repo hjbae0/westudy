@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:westudy/screens/admin/students_page.dart';
 import 'package:westudy/screens/admin/teachers_page.dart';
+import 'package:westudy/screens/admin/teacher_schedule_page.dart';
 import 'package:westudy/utils/theme.dart';
 
 enum AdminPage { dashboard, students, teachers, classes, parents, reports }
@@ -188,7 +189,7 @@ class AdminShellState extends State<AdminShell> {
       case AdminPage.students:
         return const StudentsPage();
       case AdminPage.teachers:
-        return const TeachersPage();
+        return const _TeachersTabView();
       case AdminPage.classes:
         return const _Placeholder('수업 관리');
       case AdminPage.parents:
@@ -196,6 +197,41 @@ class AdminShellState extends State<AdminShell> {
       case AdminPage.reports:
         return const _Placeholder('리포트 관리');
     }
+  }
+}
+
+class _TeachersTabView extends StatelessWidget {
+  const _TeachersTabView();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: const TabBar(
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppTheme.primaryColor,
+              tabs: [
+                Tab(text: '선생님 목록'),
+                Tab(text: '스케줄 관리'),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: TabBarView(
+              children: [
+                TeachersPage(),
+                TeacherSchedulePage(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
