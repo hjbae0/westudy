@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:westudy/utils/theme.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -112,6 +113,15 @@ class _HomeTab extends StatelessWidget {
           _buildClassCard('영어 독해', '16:00 - 17:00', '이선생님', Colors.orange),
           const SizedBox(height: 8),
           _buildClassCard('국어 문학', '18:00 - 19:00', '박선생님', Colors.green),
+          const SizedBox(height: 28),
+
+          // 이번 주 캘린더
+          const Text(
+            '이번 주 일정',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          _WeekCalendar(),
           const SizedBox(height: 24),
 
           // 빠른 메뉴
@@ -219,6 +229,237 @@ class _HomeTab extends StatelessWidget {
       ),
     );
   }
+}
+
+// 이번 주 캘린더 (Calendly 스타일 타임라인)
+class _WeekCalendar extends StatelessWidget {
+  // 데모 데이터: 요일별 수업
+  static final Map<int, List<_ClassSlot>> _weekClasses = {
+    DateTime.monday: [
+      _ClassSlot('수학 심화', '14:00', '15:00', Colors.blue),
+      _ClassSlot('영어 독해', '16:00', '17:00', Colors.orange),
+    ],
+    DateTime.tuesday: [
+      _ClassSlot('국어 문학', '10:00', '11:00', Colors.green),
+    ],
+    DateTime.wednesday: [
+      _ClassSlot('수학 심화', '14:00', '15:00', Colors.blue),
+      _ClassSlot('과학 실험', '16:00', '17:00', Colors.purple),
+      _ClassSlot('영어 회화', '18:00', '19:00', Colors.orange),
+    ],
+    DateTime.thursday: [],
+    DateTime.friday: [
+      _ClassSlot('영어 독해', '15:00', '16:00', Colors.orange),
+      _ClassSlot('국어 문학', '18:00', '19:00', Colors.green),
+    ],
+  };
+
+  // 타임라인 범위
+  static const int _startHour = 9;
+  static const int _endHour = 21;
+  static const double _hourHeight = 40.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekDays = List.generate(5, (i) => monday.add(Duration(days: i)));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          // 요일 헤더
+          _buildDayHeader(weekDays, now),
+          const Divider(height: 1),
+          // 타임라인 본체
+          SizedBox(
+            height: (_endHour - _startHour) * _hourHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 시간 라벨
+                _buildTimeLabels(),
+                // 5개 요일 열
+                ...weekDays.map((day) => Expanded(
+                      child: _buildDayColumn(context, day, now),
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayHeader(List<DateTime> weekDays, DateTime now) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          const SizedBox(width: 36), // 시간 라벨 영역
+          ...weekDays.map((day) {
+            final isToday = day.year == now.year &&
+                day.month == now.month &&
+                day.day == now.day;
+            return Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    DateFormat('E', 'ko_KR').format(day),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: isToday
+                          ? AppTheme.primaryColor
+                          : AppTheme.onSurfaceColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: isToday ? AppTheme.primaryColor : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isToday ? Colors.white : AppTheme.onSurfaceColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeLabels() {
+    return SizedBox(
+      width: 36,
+      child: Column(
+        children: List.generate(_endHour - _startHour, (i) {
+          final hour = _startHour + i;
+          return SizedBox(
+            height: _hourHeight,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '${hour.toString().padLeft(2, '0')}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.onSurfaceColor.withValues(alpha: 0.35),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildDayColumn(BuildContext context, DateTime day, DateTime now) {
+    final classes = _weekClasses[day.weekday] ?? [];
+    final isPast = day.isBefore(DateTime(now.year, now.month, now.day));
+
+    return GestureDetector(
+      onTap: isPast
+          ? null
+          : () => context.go('/student/booking'),
+      child: Stack(
+        children: [
+          // 시간 구분선
+          Column(
+            children: List.generate(_endHour - _startHour, (i) {
+              return Container(
+                height: _hourHeight,
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Colors.grey.shade100, width: 0.5),
+                    left: BorderSide(color: Colors.grey.shade100, width: 0.5),
+                  ),
+                ),
+              );
+            }),
+          ),
+          // 수업 블록
+          ...classes.map((cls) {
+            final startMinutes = _parseMinutes(cls.start) - (_startHour * 60);
+            final endMinutes = _parseMinutes(cls.end) - (_startHour * 60);
+            final top = startMinutes * _hourHeight / 60;
+            final height = (endMinutes - startMinutes) * _hourHeight / 60;
+
+            return Positioned(
+              top: top,
+              left: 2,
+              right: 2,
+              height: height,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cls.color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border(
+                    left: BorderSide(color: cls.color, width: 2.5),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cls.subject,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: cls.color.withValues(alpha: 0.9),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      cls.start,
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: cls.color.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  int _parseMinutes(String time) {
+    final parts = time.split(':');
+    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+  }
+}
+
+class _ClassSlot {
+  final String subject;
+  final String start;
+  final String end;
+  final Color color;
+  const _ClassSlot(this.subject, this.start, this.end, this.color);
 }
 
 // 일정 탭 (placeholder)
