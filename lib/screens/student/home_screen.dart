@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:westudy/models/booking_model.dart';
+import 'package:westudy/screens/student/ai_chat_screen.dart';
 import 'package:westudy/utils/constants.dart';
 import 'package:westudy/utils/theme.dart';
 
@@ -26,6 +27,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           index: _currentIndex,
           children: const [
             _HomeTab(),
+            AiChatScreen(),
             _ScheduleTab(),
             _ReportTab(),
             _ProfileTab(),
@@ -44,6 +46,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded),
             label: '홈',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.smart_toy_outlined),
+            selectedIcon: Icon(Icons.smart_toy_rounded),
+            label: 'AI',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_today_outlined),
