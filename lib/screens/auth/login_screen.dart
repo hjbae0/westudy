@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:westudy/services/auth_service.dart';
 import 'package:westudy/utils/theme.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -181,9 +183,9 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
-      final provider = GoogleAuthProvider();
-      await FirebaseAuth.instance.signInWithPopup(provider);
-      if (context.mounted) context.go('/student');
+      final authService = context.read<AuthService>();
+      await authService.signInWithGoogle();
+      // 라우트 가드가 자동 리디렉트
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -424,20 +426,20 @@ class _EmailAuthSheetState extends State<_EmailAuthSheet> {
     });
 
     try {
+      final authService = context.read<AuthService>();
       if (widget.isSignUp) {
-        final credential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(email: email, password: password);
         final name = _nameController.text.trim();
-        if (name.isNotEmpty) {
-          await credential.user?.updateDisplayName(name);
-        }
+        await authService.signUpWithEmail(
+          email: email,
+          password: password,
+          name: name.isNotEmpty ? name : email.split('@').first,
+        );
       } else {
-        await FirebaseAuth.instance
-            .signInWithEmailAndPassword(email: email, password: password);
+        await authService.signInWithEmail(email: email, password: password);
       }
       if (mounted) {
         Navigator.pop(context);
-        context.go('/student');
+        // 라우트 가드가 자동 리디렉트
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _error = _mapAuthError(e.code));
