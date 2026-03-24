@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:westudy/services/auth_service.dart';
+import 'package:westudy/services/parent_service.dart';
+import 'package:westudy/models/user_model.dart';
 import 'package:westudy/utils/theme.dart';
 
 class ParentReportScreen extends StatelessWidget {
@@ -6,10 +10,13 @@ class ParentReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = context.watch<AuthService>();
+    final parentName = authService.userModel?.name ?? '학부모';
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('학습 리포트', style: TextStyle(fontWeight: FontWeight.w600)),
+        title: Text('$parentName님의 리포트', style: const TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: AppTheme.backgroundColor,
         elevation: 0,
       ),

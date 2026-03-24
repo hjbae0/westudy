@@ -22,9 +22,17 @@ service cloud.firestore {
       return hasRole('admin');
     }
 
+    // 학부모가 자녀인지 확인
+    function isParentOf(studentId) {
+      return hasRole('parent') &&
+        get(/databases/$(database)/documents/users/$(studentId)).data.parentId == request.auth.uid;
+    }
+
     // users 컬렉션
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || isAdmin() || isParentOf(userId)
+      );
       allow create: if isAuthenticated() && isOwner(userId);
       allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow delete: if isAdmin();
@@ -33,7 +41,9 @@ service cloud.firestore {
     // bookings 컬렉션
     match /bookings/{bookingId} {
       allow read: if isAuthenticated() && (
-        resource.data.studentId == request.auth.uid || isAdmin()
+        resource.data.studentId == request.auth.uid ||
+        isParentOf(resource.data.studentId) ||
+        isAdmin()
       );
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (
@@ -51,7 +61,9 @@ service cloud.firestore {
     // reports 컬렉션
     match /reports/{reportId} {
       allow read: if isAuthenticated() && (
-        resource.data.studentId == request.auth.uid || isAdmin()
+        resource.data.studentId == request.auth.uid ||
+        isParentOf(resource.data.studentId) ||
+        isAdmin()
       );
       allow create: if isAdmin();
       allow update: if isAdmin();
