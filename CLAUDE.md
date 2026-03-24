@@ -1,3 +1,73 @@
+# WeStudy 프로젝트
+
+## 프로젝트 개요
+- **이름**: WeStudy (위스터디) - 학생/학부모/관리자 학습 관리 플랫폼
+- **스택**: Flutter Web + Firebase (Auth, Firestore, Hosting, Cloud Functions)
+- **배포**: Firebase Hosting (`firebase deploy --only hosting`)
+
+## 프로젝트 구조
+```
+lib/
+  main.dart                    # Firebase 초기화 + 앱 실행
+  app.dart                     # GoRouter + Provider + 라우트 가드
+  firebase_options.dart        # Firebase 설정 (flutterfire configure로 생성)
+  models/                      # 데이터 모델 (fromFirestore/toFirestore)
+    user_model.dart            # 사용자 (role: student/parent/admin)
+    booking_model.dart         # 예약 (LMT 포함)
+    slot_model.dart            # 30분 슬롯 (available/booked/blocked)
+    report_model.dart          # 학습 리포트
+    notification_model.dart    # 알림
+  services/
+    auth_service.dart          # Firebase Auth + Firestore 프로필 관리
+    booking_service.dart       # 예약 CRUD (트랜잭션)
+    slot_service.dart          # 슬롯 생성/조회/차단
+    lmt_service.dart           # 긴급변경권 (주 3회 제한)
+    parent_service.dart        # 학부모-학생 연결
+  screens/
+    auth/login_screen.dart     # 카카오/네이버/Google/이메일 로그인
+    student/
+      home_screen.dart         # 홈 (수업목록 + 주간캘린더 + 빠른메뉴)
+      booking_screen.dart      # Calendly 스타일 예약
+      change_screen.dart       # LMT 긴급변경
+    parent/report_screen.dart  # 학습 리포트 (진도바)
+    admin/dashboard_screen.dart # 대시보드 (Firestore 실시간)
+  utils/
+    theme.dart                 # 배경색 #F8F6F3
+    constants.dart             # Firestore 컬렉션명, 역할, 라우트
+  widgets/                     # 공통 위젯
+functions/
+  src/notification/            # 솔라피 알림톡 (솔라피 API)
+  src/booking/                 # 예약 트리거 (onCreate/onUpdate/onCancel)
+firestore.rules                # 역할 기반 보안 규칙
+firebase.json                  # Hosting + Firestore + Functions 설정
+```
+
+## 핵심 기능
+- **인증**: 카카오/네이버(Custom Token 예정), Google, 이메일/비밀번호
+- **예약**: Firestore 트랜잭션 기반, 슬롯 잔여석 검증, 중복 방지
+- **LMT**: 긴급변경권 주 3회, 소진 시 경고/거부
+- **라우트 가드**: 인증 상태 + 역할별 자동 리디렉트 (kDevMode로 개발 중 우회)
+- **학부모**: parentId/childrenIds 양방향 연결, 자녀 데이터 조회
+
+## 빌드/배포 명령
+```bash
+flutter pub get                          # 의존성 설치
+flutter build web --release              # 웹 빌드
+flutter run -d chrome                    # 로컬 실행
+firebase deploy --only hosting           # Hosting 배포
+firebase deploy --only firestore:rules   # 보안 규칙 배포
+firebase deploy --only functions         # Cloud Functions 배포
+```
+
+## 다음 단계 (TODO)
+- [ ] Firebase 프로젝트 생성 + flutterfire configure
+- [ ] 카카오/네이버 Custom Token 연동 (Cloud Functions)
+- [ ] kDevMode를 false로 전환 (프로덕션)
+- [ ] 알림톡 솔라피 API 키 설정
+- [ ] 학부모 자녀 연결 UI
+
+---
+
 # Boss 워크스페이스
 
 ## 기본 규칙

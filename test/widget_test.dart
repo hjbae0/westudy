@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:westudy/main.dart';
+import 'package:westudy/app.dart';
 
 void main() {
   testWidgets('App should build', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const WeStudyApp());
   });
 }
