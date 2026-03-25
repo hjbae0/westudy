@@ -6,13 +6,13 @@
 - **라이브 URL**: https://westudy-bfcb4.web.app
 - **GitHub**: https://github.com/hjbae0/westudy
 - **Firebase 프로젝트**: westudy-bfcb4
-- **진행률**: ~80% (MVP 코어 완성, 프로덕션 전환 준비 단계)
+- **진행률**: ~95% (프로덕션 전환 완료, 앱스토어 등록 전)
 
 ## 프로젝트 구조
 ```
 lib/
-  main.dart                          # Firebase 초기화 + 앱 실행
-  app.dart                           # GoRouter + Provider + 라우트 가드 (kDevMode)
+  main.dart                          # Firebase 초기화 + ko_KR 로케일 + 앱 실행
+  app.dart                           # GoRouter + Provider + 라우트 가드 (kDevMode=false)
   firebase_options.dart              # Firebase 설정
   models/                            # 데이터 모델 (fromFirestore/toFirestore)
     user_model.dart                  # 사용자 (role, parentId, childrenIds)
@@ -61,8 +61,8 @@ firebase.json                        # Hosting (no-cache) + Firestore + Function
 test/                                # 유닛 테스트 (13/13 passed)
 ```
 
-## 완료된 기능 (80%)
-- **인증**: Google signInWithPopup + 이메일/비밀번호 (가입+로그인) 완전 작동
+## 완료된 기능 (95%)
+- **인증**: Google + 이메일/비밀번호 완전 작동 + 카카오/네이버 OAuth Cloud Function 구현
 - **예약 시스템**: Firestore 트랜잭션, 슬롯 잔여석 검증, 중복 방지, Calendly 스타일 UI
 - **LMT 긴급변경권**: 주 3회 제한, 소진 시 경고/거부, UI + 서비스 + 커스텀 예외
 - **AI 스케줄러**: 규칙 기반 NLP (의도파싱/슬롯검색/시간추천/실기제외), 채팅 UI
@@ -77,30 +77,41 @@ test/                                # 유닛 테스트 (13/13 passed)
 - **빌드**: Web 배포 완료, Android APK 빌드 완료, iOS 설정 완료
 - **테스트**: BookingModel + SlotModel + LMT 로직 (13/13 passed)
 
-## 미완성 기능 (20% - 프로덕션 블로커 포함)
+## 완료된 프로덕션 전환 (2026-03-25)
+- [x] kDevMode=false 전환 (인증 가드 활성화)
+- [x] firebase_options.dart 실제 값 (Web + Android)
+- [x] Android 앱 Firebase 등록 + google-services.json
+- [x] 카카오/네이버 Custom Token Cloud Function 구현
+- [x] 학생 홈 일정 탭 구현 (주간 캘린더 + 수업 목록)
+- [x] 학생 홈 리포트 탭 구현 (주간 통계 + 과목별 진도)
+- [x] 학생 프로필 탭 구현 (LMT 상태 + 설정 + 로그아웃)
+- [x] 레거시 파일 정리 (home_screen.dart, dashboard_screen.dart 삭제)
+- [x] 한국어 날짜 포맷 초기화 (initializeDateFormatting)
+- [x] Firestore 데이터베이스 생성 (서울 리전) + 테스트 데이터 시딩
+- [x] Android 에뮬레이터 실행 확인
 
-### CRITICAL (프로덕션 전 필수)
-- [ ] kDevMode를 false로 전환 (현재 인증 가드 비활성)
-- [ ] flutterfire configure (firebase_options.dart 실제 값)
+## 미완성 기능 (5%)
+
+### Boss 작업 필요
+- [ ] 카카오 개발자 앱 등록 + API 키 설정
+- [ ] 네이버 개발자 앱 등록 + API 키 설정
 - [ ] 솔라피 API 키 설정 (firebase functions:config:set solapi.api_key=...)
-- [ ] 카카오/네이버 Custom Token Cloud Function 구현
 
-### HIGH (서비스 품질)
-- [ ] 학생 홈 일정 탭 구현 (현재 플레이스홀더)
-- [ ] 학생 홈 리포트 탭 구현 (현재 플레이스홀더)
-- [ ] 학생 프로필 탭 구현 (현재 플레이스홀더)
+### 기능 확장
+- [ ] 음성 입력 연동 (speech_to_text)
+- [ ] 푸시 알림 FCM (firebase_messaging)
+- [ ] AI 엔진 Gemini API 연동 (현재 규칙 기반)
 - [ ] CI/CD 파이프라인 (GitHub Actions)
 
-### MEDIUM (기능 확장)
-- [ ] 음성 입력 연동 (speech_to_text 패키지 추가 필요)
-- [ ] 푸시 알림 FCM (firebase_messaging 패키지 추가 필요)
-- [ ] AI 엔진 Gemini API 연동 (현재 규칙 기반 → ML 전환)
-- [ ] 데이터 페이지네이션 (대규모 데이터 대비)
-
-### LOW (앱 출시)
+### 앱 출시
 - [ ] Google Play 스토어 등록 ($25)
 - [ ] Apple App Store 등록 (연 $99)
 - [ ] 베타 테스트 (학생 3명)
+
+## 테스트 계정
+- **관리자**: admin@westudy.kr / westudy2026!
+- **학생**: kimyesul@test.com ~ jeonghana@test.com / test1234!
+- **선생님**: kim.teacher@westudy.kr 등 / test1234!
 
 ## 빌드/배포 명령
 ```bash

@@ -50,3 +50,7 @@ functions/lib/
 *.log
 *.pyc
 .env
+scripts/node_modules/
+functions/package-lock.json
+scripts/package-lock.json
+.firebase/
