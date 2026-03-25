@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "820857265556",
+    "project_id": "westudy-bfcb4",
+    "storage_bucket": "westudy-bfcb4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820857265556:android:a93317bc717ec0fc534381",
+        "android_client_info": {
+          "package_name": "com.westudy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSHA9OvXnqSfIeNMcai9LyLW-3bu2Xqp8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

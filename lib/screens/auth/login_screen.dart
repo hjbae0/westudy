@@ -155,53 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // DEV 바로가기
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'DEV 바로가기',
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _DevButton(
-                                  label: '학생',
-                                  icon: Icons.school,
-                                  color: AppTheme.primaryColor,
-                                  onTap: () => context.go('/student'),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _DevButton(
-                                  label: '학부모',
-                                  icon: Icons.family_restroom,
-                                  color: AppTheme.secondaryColor,
-                                  onTap: () => context.go('/parent'),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _DevButton(
-                                  label: '관리자',
-                                  icon: Icons.admin_panel_settings,
-                                  color: const Color(0xFFE17055),
-                                  onTap: () => context.go('/admin'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -594,38 +547,3 @@ class _EmailAuthSheetState extends State<_EmailAuthSheet> {
   }
 }
 
-// DEV 바로가기 버튼
-class _DevButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _DevButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-}

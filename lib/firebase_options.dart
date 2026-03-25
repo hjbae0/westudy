@@ -25,10 +25,9 @@ class DefaultFirebaseOptions {
     measurementId: 'G-HZGB8DDXP8',
   );
 
-  // Android/iOS는 앱 등록 후 업데이트
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBCrI70Ij6mKw92myvBiSlO6AO8OJWQhbE',
-    appId: '1:820857265556:web:8b7a1930e76ea4b9534381',
+    appId: '1:820857265556:android:a93317bc717ec0fc534381',
     messagingSenderId: '820857265556',
     projectId: 'westudy-bfcb4',
     storageBucket: 'westudy-bfcb4.firebasestorage.app',
