@@ -42,6 +42,10 @@ google-services.json
 GoogleService-Info.plist
 # firebase_options.dart - placeholder는 커밋, 실제 키는 flutterfire configure로 덮어쓰기
 
+# Cloud Functions
+functions/node_modules/
+functions/lib/
+
 # Misc
 *.log
 *.pyc

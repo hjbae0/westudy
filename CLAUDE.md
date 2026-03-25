@@ -1,180 +1,128 @@
 # WeStudy 프로젝트
 
 ## 프로젝트 개요
-- **이름**: WeStudy (위스터디) - 학생/학부모/관리자 학습 관리 플랫폼
-- **스택**: Flutter (Web/Android/iOS) + Firebase (Auth, Firestore, Hosting, Cloud Functions)
+- **이름**: WeStudy (위스터디) - 예중/예고 전문 온라인 교과 스터디룸
+- **스택**: Flutter 3.41 (Web/Android/iOS) + Firebase (Auth, Firestore, Hosting, Cloud Functions)
 - **라이브 URL**: https://westudy-bfcb4.web.app
 - **GitHub**: https://github.com/hjbae0/westudy
 - **Firebase 프로젝트**: westudy-bfcb4
+- **진행률**: ~80% (MVP 코어 완성, 프로덕션 전환 준비 단계)
 
 ## 프로젝트 구조
 ```
 lib/
-  main.dart                    # Firebase 초기화 + 앱 실행
-  app.dart                     # GoRouter + Provider + 라우트 가드 (kDevMode)
-  firebase_options.dart        # Firebase 설정 (flutterfire configure로 교체)
-  models/                      # 데이터 모델 (fromFirestore/toFirestore)
-    user_model.dart            # 사용자 (role, parentId, childrenIds)
-    booking_model.dart         # 예약 (subject, teacherName, lmtUsed)
-    slot_model.dart            # 30분 슬롯 (available/booked/blocked)
-    report_model.dart          # 학습 리포트
-    notification_model.dart    # 알림
-  services/
-    auth_service.dart          # Firebase Auth + Firestore 프로필 + Provider
-    booking_service.dart       # 예약 CRUD (Firestore 트랜잭션)
-    slot_service.dart          # 슬롯 생성/조회/차단
-    lmt_service.dart           # 긴급변경권 (주 3회 제한)
-    parent_service.dart        # 학부모-학생 연결
-    ai_service.dart            # AI 자연어 스케줄링
+  main.dart                          # Firebase 초기화 + 앱 실행
+  app.dart                           # GoRouter + Provider + 라우트 가드 (kDevMode)
+  firebase_options.dart              # Firebase 설정
+  models/                            # 데이터 모델 (fromFirestore/toFirestore)
+    user_model.dart                  # 사용자 (role, parentId, childrenIds)
+    booking_model.dart               # 예약 (subject, teacherName, lmtUsed)
+    slot_model.dart                  # 30분 슬롯 (available/booked/blocked)
+    report_model.dart                # 학습 리포트
+    notification_model.dart          # 알림
+  services/                          # 비즈니스 로직 (6개 서비스 전부 구현 완료)
+    auth_service.dart                # Firebase Auth (Google+이메일) + Firestore 프로필
+    booking_service.dart             # 예약 CRUD (Firestore 트랜잭션, 동시성 안전)
+    slot_service.dart                # 슬롯 생성/조회/차단 (30분 단위)
+    lmt_service.dart                 # 긴급변경권 (주 3회, LmtExhaustedException)
+    parent_service.dart              # 학부모-학생 양방향 연결
+    ai_service.dart                  # 규칙 기반 자연어 스케줄링 (의도파싱+슬롯추천)
   screens/
-    auth/login_screen.dart     # 카카오/네이버/Google/이메일 로그인
+    auth/login_screen.dart           # Google/이메일 (작동) + 카카오/네이버 (UI만)
     student/
-      home_screen.dart         # 홈 (수업목록 + 주간캘린더 + 빠른메뉴 + 5탭)
-      booking_screen.dart      # Calendly 스타일 예약 (Firestore 연동)
-      change_screen.dart       # LMT 긴급변경
-      ai_chat_screen.dart      # AI 채팅 (자연어 예약/조회/추천)
-    parent/report_screen.dart  # 학습 리포트 (진도바)
-    admin/dashboard_screen.dart # 대시보드 (Firestore 실시간 지표+테이블)
+      student_home_screen.dart       # 홈 (5탭: 홈/AI/일정/리포트/프로필)
+      home_screen.dart               # 레거시 (student_home_screen으로 대체됨)
+      booking_screen.dart            # Calendly 스타일 예약 (Firestore 실시간)
+      change_screen.dart             # LMT 긴급변경 (잔여 표시, 대체 슬롯)
+      ai_chat_screen.dart            # AI 채팅 (버블UI, 퀵커맨드, 슬롯카드)
+    parent/
+      parent_home_screen.dart        # 학부모 홈
+      report_screen.dart             # 학습 리포트 (자녀선택, 주간통계, 진도바)
+    admin/                           # 관리자 (8개 페이지 + 사이드바 쉘)
+      admin_shell.dart               # 반응형 사이드바 네비게이션
+      admin_home_screen.dart         # 관리자 진입점
+      dashboard_page.dart            # 실시간 대시보드 (지표카드+차트+테이블)
+      students_page.dart             # 학생 관리 (검색/추가/수정/삭제)
+      teachers_page.dart             # 선생님 관리
+      parents_page.dart              # 학부모 관리 (학생 연결)
+      classes_page.dart              # 수업 관리 (드래그앤드롭 시간변경)
+      classes_import_page.dart       # Google Sheets/Calendar 가져오기
+      teacher_schedule_page.dart     # 선생님 주간 스케줄 관리
+      reports_page.dart              # 리포트 관리
+      billing_page.dart              # 정산 관리 (5개 하위 탭)
   utils/
-    theme.dart                 # 배경색 #F8F6F3, 프라이머리 #4A6FA5
-    constants.dart             # Firestore 컬렉션명, 역할, 라우트
+    theme.dart                       # 배경색 #F8F6F3, 프라이머리 #4A6FA5
+    constants.dart                   # Firestore 컬렉션명, 역할, 라우트
 functions/
-  src/notification/            # 솔라피 알림톡 (4개 템플릿)
-  src/booking/                 # 예약 트리거 (onCreate/onUpdate/onCancel)
-firestore.rules                # 역할 기반 보안 규칙 (isParentOf 포함)
-firebase.json                  # Hosting + Firestore + Functions 설정
+  src/notification/                  # 솔라피 알림톡 (HMAC-SHA256 인증, 4개 트리거)
+  src/booking/                       # 예약 트리거 (onCreate/onUpdate/onCancel)
+firestore.rules                      # 역할 기반 보안 규칙 (isParentOf 포함)
+firebase.json                        # Hosting (no-cache) + Firestore + Functions
+test/                                # 유닛 테스트 (13/13 passed)
 ```
 
-## 완료된 기능
-- **인증**: Google (signInWithPopup), 이메일/비밀번호 (가입+로그인), 카카오/네이버 (UI 준비, Custom Token 예정)
-- **예약**: Firestore 트랜잭션, 슬롯 잔여석 검증, 중복 방지, Calendly 스타일 UI
-- **LMT**: 긴급변경권 주 3회, 소진 시 경고/거부, UI + 서비스 완료
-- **AI 스케줄러**: 자연어 의도 파싱 (예약/취소/변경/조회), 빈 슬롯 검색, 최적 시간 추천, 실기 시간 자동 제외
-- **라우트 가드**: 인증 상태 + 역할별 자동 리디렉트
-- **학부모**: parentId/childrenIds 양방향 연결, Firestore rules 학부모 접근 허용
-- **관리자**: 실시간 대시보드 (오늘수업/등록학생/출석률/이번달 예약)
-- **알림톡**: 솔라피 Cloud Functions (예약확인/리마인더/취소/주간리포트)
+## 완료된 기능 (80%)
+- **인증**: Google signInWithPopup + 이메일/비밀번호 (가입+로그인) 완전 작동
+- **예약 시스템**: Firestore 트랜잭션, 슬롯 잔여석 검증, 중복 방지, Calendly 스타일 UI
+- **LMT 긴급변경권**: 주 3회 제한, 소진 시 경고/거부, UI + 서비스 + 커스텀 예외
+- **AI 스케줄러**: 규칙 기반 NLP (의도파싱/슬롯검색/시간추천/실기제외), 채팅 UI
+- **라우트 가드**: 인증 상태 + 역할별 자동 리디렉트 (현재 kDevMode=true로 비활성)
+- **학부모**: 양방향 연결, 자녀 예약/리포트 조회, Firestore rules 접근 허용
+- **관리자 대시보드**: 실시간 지표 + 차트 + 테이블 + 8개 관리 페이지
+- **수업 관리**: 드래그앤드롭 시간변경, Google Sheets/Calendar 가져오기
+- **정산 관리**: 5개 하위 탭 (학생별/월별/결제추적)
+- **선생님 스케줄**: 주간 가용시간 그리드 관리
+- **Cloud Functions**: 예약 생성/수정/취소 트리거 + 솔라피 알림톡 4개
+- **보안 규칙**: 역할 기반 + 학부모 관계 기반 접근 제어
 - **빌드**: Web 배포 완료, Android APK 빌드 완료, iOS 설정 완료
-- **테스트**: BookingModel + SlotModel + LMT 로직 테스트 (13/13 passed)
+- **테스트**: BookingModel + SlotModel + LMT 로직 (13/13 passed)
+
+## 미완성 기능 (20% - 프로덕션 블로커 포함)
+
+### CRITICAL (프로덕션 전 필수)
+- [ ] kDevMode를 false로 전환 (현재 인증 가드 비활성)
+- [ ] flutterfire configure (firebase_options.dart 실제 값)
+- [ ] 솔라피 API 키 설정 (firebase functions:config:set solapi.api_key=...)
+- [ ] 카카오/네이버 Custom Token Cloud Function 구현
+
+### HIGH (서비스 품질)
+- [ ] 학생 홈 일정 탭 구현 (현재 플레이스홀더)
+- [ ] 학생 홈 리포트 탭 구현 (현재 플레이스홀더)
+- [ ] 학생 프로필 탭 구현 (현재 플레이스홀더)
+- [ ] CI/CD 파이프라인 (GitHub Actions)
+
+### MEDIUM (기능 확장)
+- [ ] 음성 입력 연동 (speech_to_text 패키지 추가 필요)
+- [ ] 푸시 알림 FCM (firebase_messaging 패키지 추가 필요)
+- [ ] AI 엔진 Gemini API 연동 (현재 규칙 기반 → ML 전환)
+- [ ] 데이터 페이지네이션 (대규모 데이터 대비)
+
+### LOW (앱 출시)
+- [ ] Google Play 스토어 등록 ($25)
+- [ ] Apple App Store 등록 (연 $99)
+- [ ] 베타 테스트 (학생 3명)
 
 ## 빌드/배포 명령
 ```bash
 flutter pub get                          # 의존성 설치
 flutter build web --release              # 웹 빌드
 flutter run -d chrome                    # 로컬 실행
-flutter build apk --debug                # Android APK
+flutter build apk --debug               # Android APK
 flutter build ios --no-codesign          # iOS (Xcode 필요)
 firebase deploy --only hosting           # Hosting 배포
 firebase deploy --only firestore:rules   # 보안 규칙 배포
 firebase deploy --only functions         # Cloud Functions 배포
 ```
 
-## 다음 단계 (TODO)
-- [ ] flutterfire configure로 firebase_options.dart 실제 값 설정
-- [ ] 카카오/네이버 Custom Token 연동 (Cloud Functions)
-- [ ] kDevMode를 false로 전환 (프로덕션)
-- [ ] 솔라피 API 키 설정 (firebase functions:config:set)
-- [ ] 학부모 자녀 연결 UI
-- [ ] 음성 입력 연동 (speech_to_text)
-- [ ] 푸시 알림 (FCM)
+## 코드 컨벤션
+- UI/주석: 한국어
+- Firestore 컬렉션명: 영어 (users, bookings, slots, reports, notifications)
+- 커밋 메시지: 한국어 OK (feat:/fix:/refactor: 접두사)
+- 상태 관리: Provider (ChangeNotifierProvider)
+- 라우팅: GoRouter (/student/, /parent/, /admin/)
 
----
-
-# Boss 워크스페이스
-
-## 기본 규칙
-- 모든 응답과 노트는 한국어로 작성
-- 옵시디언 노트 저장 시 PARA 구조 준수
-- 날짜는 항상 `TZ=Asia/Seoul date` 명령으로 동적 계산 (하드코딩 금지)
-
-## 옵시디언 볼트 구조 (PARA)
-```
-0_Inbox_fleeting/     ← 빠른 메모, 미분류 노트
-1_Projects_성과목표/  ← 트레이딩/, 마케팅기획/, 책연구/
-2_Areas_계속_책임/    ← 손실종목/, bkit-system/, 시장재료/, 종목재료메모/
-3_Resouces_문헌_관심_참고/ ← 도구 가이드, 리서치 자료
-4_Archives_완료_연결/ ← 완료된 프로젝트
-5_Permanent_Notes/    ← 영구 노트
-Stock Analysis/       ← 증시브리핑, 종목분석
-DISHSUM 쇼핑몰/       ← 스마트스토어 상품관리
-키움증권 HTS/         ← HTS 매뉴얼
-Periodic_2026/        ← 주기적 리뷰, 볼트 정리 기록
-Clippings/            ← 웹 클리핑
-```
-
-## MCP 서버
-- **Obsidian MCP**: 볼트 읽기/쓰기/검색
-- **Naver Search MCP**: 뉴스, 블로그, 카페, 쇼핑, 웹문서, DataLab
-- **Exa Search MCP**: 영문 심층 검색, find_similar, get_contents
-- **Pinecone**: naver-stock-themes, korean-stock-news 인덱스
-- **Sequential Thinking**: 복잡한 분석 시 사고 구조화
-
-## 에이전트 팀 단축 명령어
-
-아래 키워드가 입력되면 해당 에이전트 팀을 자동으로 스폰하라.
-
-### "증시 분석" 또는 "증시 브리핑"
-→ 에이전트 팀 3명 스폰:
-- **시장수급**: Exa + 네이버 search_news로 코스피/코스닥 지수, 외국인/기관 수급 수집
-- **테마종목**: 네이버 search_news + search_webkr로 급등/급락 테마, 특징주 TOP 5 조사
-- **글로벌**: Exa로 미국/중국 증시, 환율, 원자재 동향 수집
-- Team Lead: 종합 후 obsidian_append_content로 "Stock Analysis/증시브리핑_{날짜}.md" 저장
-- 대화창에는 5줄 요약만 출력
-
-### "{종목명} 분석" 또는 "{종목명} 어때"
-→ 에이전트 팀 3명 스폰:
-- **단기뉴스**: 네이버 search_news 4회 (주가/공시/외국인매매/전망) + 핵심 기사 3개 WebFetch
-- **동반종목**: 네이버 search_webkr 3회 + search_news 1회로 같은 테마 동반급등주 TOP 5
-- **산업분석**: 네이버 search_news 3회 + search_blog 1회 + Exa 3회로 실적/목표가/산업맥락
-- Team Lead: 투자포인트 5가지 도출 → "0_Inbox_fleeting/{종목명}_분석리포트_{날짜}.md" 저장
-- 대화창에는 핵심 1줄 + 동반급등 TOP 3만 출력
-
-### "Inbox 정리" 또는 "인박스 정리"
-→ 에이전트 팀 2명 스폰:
-- **분류**: 0_Inbox_fleeting/ 전체 파일을 batch로 읽고 PARA 폴더별 분류 판정
-  - 종목 분석 → Stock Analysis/
-  - 쇼핑몰 관련 → DISHSUM 쇼핑몰/
-  - 도구/설정 → 3_Resouces_문헌_관심_참고/
-  - 개인 메모 → 5_Permanent_Notes/
-  - 무제/빈 파일 → 삭제 후보
-- **실행**: 분류 결과 검증 + 중복 확인 + 최종 액션플랜 작성
-- Team Lead: "0_Inbox_fleeting/📋_Inbox정리_액션플랜_{날짜}.md"에 저장
-- 실제 이동/삭제는 Boss 확인 후 "실행해줘"라고 하면 진행
-
-### "볼트 정리" 또는 "볼트 점검"
-→ 에이전트 팀 3명 스폰:
-- **Inbox정리**: 0_Inbox_fleeting/ 파일 분류 + 이동 제안
-- **종목노트점검**: Stock Analysis + Inbox의 분석 노트 품질 등급(A/B/C) + 중복 식별
-- **구조점검**: PARA 폴더별 파일 수 통계 + 루트 방치 파일 + 고아 노트 탐지
-- Team Lead: "Periodic_2026/볼트정리_{날짜}.md"에 종합 리포트 저장
-
-### "종목 리뷰" 또는 "분석 리뷰"
-→ 에이전트 팀 2명 스폰:
-- **노트점검**: Stock Analysis + Inbox 종목분석 노트 전수 품질 체크 (frontmatter/태그/출처/mermaid)
-- **인사이트**: 가장 많이 분석한 종목 TOP 10, 반복 테마, 월별 관심 변화, 다음 주 워치리스트
-- Team Lead: "Stock Analysis/종목분석_주간리뷰_{날짜}.md"에 저장
-
-### "상품 등록 {상품명}" 또는 "{상품명} 등록"
-→ 에이전트 팀 3명 스폰:
-- **경쟁분석**: 네이버 search_shop으로 경쟁 상품 가격/제목/리뷰 패턴 조사
-- **상품기획**: 경쟁분석 결과로 상품명 3개 후보 + SEO 키워드 20개 + 상세설명 초안
-- **마케팅**: 네이버 search_blog + datalab으로 블로그 키워드 + SNS 해시태그 + 1주 캘린더
-- Team Lead: "DISHSUM 쇼핑몰/{상품명}_등록가이드_{날짜}.md"에 저장
-
-### "루트 정리" 또는 "루트 청소"
-→ 에이전트 팀 2명 스폰:
-- **루트정리**: 볼트 루트 방치 파일(무제.md 등) 내용 확인 → 분류/삭제 판정
-- **폴더통합**: 중복 폴더(0.Inbox vs 0_Inbox) 통합 + PARA 하위 구조 점검 + 개선안
-- Team Lead: "Periodic_2026/볼트_루트정리_{날짜}.md"에 저장
-
-## 저장 규칙
-- 종목 분석: `0_Inbox_fleeting/{종목명}_분석리포트_{날짜}.md`
-- 증시 브리핑: `Stock Analysis/증시브리핑_{날짜}.md`
-- 볼트 정리: `Periodic_2026/볼트정리_{날짜}.md`
-- 상품 등록: `DISHSUM 쇼핑몰/{상품명}_등록가이드_{날짜}.md`
-- 모든 노트에 frontmatter (tags, date) 포함
-
-## 대화창 출력 규칙
-- 에이전트 팀 작업 결과는 항상 5줄 이내 요약만 출력
-- 전체 내용은 옵시디언에서 확인하도록 안내
-- 이모티콘으로 구분: 📊증시 📈종목 🛒상품 📝정리 🔀종합
+## 옵시디언 상세 문서
+- 마스터플랜: `1_Projects_성과목표/위스터디_개발_마스터플랜.md`
+- 에이전트팀: `1_Projects_성과목표/위스터디_에이전트팀_구성.md`
+- 기술스택: `1_Projects_성과목표/위스터디_기술스택_아키텍처.md`
+- AI 설계: `1_Projects_성과목표/위스터디_AI스케줄링_설계.md`

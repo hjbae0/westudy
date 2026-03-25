@@ -342,12 +342,3 @@ class _TeachersTabView extends StatelessWidget {
   }
 }
 
-class _Placeholder extends StatelessWidget {
-  final String title;
-  const _Placeholder(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text(title, style: TextStyle(color: Colors.grey.shade400, fontSize: 20)));
-  }
-}

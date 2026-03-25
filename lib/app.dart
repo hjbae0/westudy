@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:westudy/services/auth_service.dart';
-import 'package:westudy/screens/student/home_screen.dart';
+import 'package:westudy/screens/student/student_home_screen.dart';
 import 'package:westudy/screens/student/booking_screen.dart';
 import 'package:westudy/screens/student/change_screen.dart';
 import 'package:westudy/screens/parent/report_screen.dart';
@@ -11,7 +11,7 @@ import 'package:westudy/screens/auth/login_screen.dart';
 import 'package:westudy/utils/theme.dart';
 
 // DEV 모드: 라우트 가드 우회 허용
-const bool kDevMode = true;
+const bool kDevMode = false;
 
 GoRouter createRouter(AuthService authService) {
   return GoRouter(

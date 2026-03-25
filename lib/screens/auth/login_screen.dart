@@ -5,192 +5,305 @@ import 'package:provider/provider.dart';
 import 'package:westudy/services/auth_service.dart';
 import 'package:westudy/utils/theme.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isSocialLoading = false;
+  String? _socialLoadingProvider;
+
+  @override
   Widget build(BuildContext context) {
+    // AuthService의 isLoading 상태도 감시
+    final authService = context.watch<AuthService>();
+    final isLoading = _isSocialLoading || authService.isLoading;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom,
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 80),
-                // 로고
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.school_rounded,
-                    color: Colors.white,
-                    size: 40,
-                  ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top -
+                      MediaQuery.of(context).padding.bottom,
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'WeStudy',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.onSurfaceColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '스마트한 학습 관리의 시작',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.onSurfaceColor.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 48),
-
-                // 1. 카카오 로그인
-                _SocialLoginButton(
-                  label: '카카오로 시작하기',
-                  icon: Icons.chat_bubble,
-                  backgroundColor: const Color(0xFFFEE500),
-                  foregroundColor: const Color(0xFF191919),
-                  onPressed: () {
-                    // TODO: 카카오 Custom Token 로그인
-                    context.go('/student');
-                  },
-                ),
-                const SizedBox(height: 10),
-
-                // 2. 네이버 로그인
-                _SocialLoginButton(
-                  label: '네이버로 시작하기',
-                  icon: Icons.north_east_rounded,
-                  backgroundColor: const Color(0xFF03C75A),
-                  foregroundColor: Colors.white,
-                  onPressed: () {
-                    // TODO: 네이버 Custom Token 로그인
-                    context.go('/student');
-                  },
-                ),
-                const SizedBox(height: 10),
-
-                // 3. 구글 로그인
-                _SocialLoginButton(
-                  label: 'Google로 시작하기',
-                  iconWidget: Image.network(
-                    'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                    width: 20,
-                    height: 20,
-                    errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFF4285F4)),
-                  ),
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppTheme.onSurfaceColor,
-                  borderColor: Colors.grey.shade300,
-                  onPressed: () => _signInWithGoogle(context),
-                ),
-                const SizedBox(height: 10),
-
-                // 4. 이메일 로그인
-                _SocialLoginButton(
-                  label: '이메일로 로그인',
-                  icon: Icons.email_outlined,
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  onPressed: () => _showEmailLoginSheet(context),
-                ),
-                const SizedBox(height: 20),
-
-                // 이메일 회원가입 링크
-                TextButton(
-                  onPressed: () => _showEmailSignUpSheet(context),
-                  child: Text(
-                    '이메일로 가입하기',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.primaryColor,
-                      decoration: TextDecoration.underline,
-                      decorationColor: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // DEV 바로가기
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'DEV 바로가기',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 80),
+                    // 로고
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
+                      child: const Icon(
+                        Icons.school_rounded,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'WeStudy',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.onSurfaceColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '스마트한 학습 관리의 시작',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.onSurfaceColor.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+
+                    // 1. 카카오 로그인
+                    _SocialLoginButton(
+                      label: _socialLoadingProvider == 'kakao'
+                          ? '카카오 로그인 중...'
+                          : '카카오로 시작하기',
+                      icon: Icons.chat_bubble,
+                      backgroundColor: const Color(0xFFFEE500),
+                      foregroundColor: const Color(0xFF191919),
+                      isLoading: _socialLoadingProvider == 'kakao',
+                      onPressed: isLoading
+                          ? null
+                          : () => _signInWithKakao(context),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 2. 네이버 로그인
+                    _SocialLoginButton(
+                      label: _socialLoadingProvider == 'naver'
+                          ? '네이버 로그인 중...'
+                          : '네이버로 시작하기',
+                      icon: Icons.north_east_rounded,
+                      backgroundColor: const Color(0xFF03C75A),
+                      foregroundColor: Colors.white,
+                      isLoading: _socialLoadingProvider == 'naver',
+                      onPressed: isLoading
+                          ? null
+                          : () => _signInWithNaver(context),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 3. 구글 로그인
+                    _SocialLoginButton(
+                      label: _socialLoadingProvider == 'google'
+                          ? 'Google 로그인 중...'
+                          : 'Google로 시작하기',
+                      iconWidget: _socialLoadingProvider == 'google'
+                          ? null
+                          : Image.network(
+                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                              width: 20,
+                              height: 20,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFF4285F4)),
+                            ),
+                      icon: _socialLoadingProvider == 'google' ? Icons.g_mobiledata : null,
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.onSurfaceColor,
+                      borderColor: Colors.grey.shade300,
+                      isLoading: _socialLoadingProvider == 'google',
+                      onPressed: isLoading
+                          ? null
+                          : () => _signInWithGoogle(context),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 4. 이메일 로그인
+                    _SocialLoginButton(
+                      label: '이메일로 로그인',
+                      icon: Icons.email_outlined,
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      onPressed: isLoading
+                          ? null
+                          : () => _showEmailLoginSheet(context),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 이메일 회원가입 링크
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => _showEmailSignUpSheet(context),
+                      child: Text(
+                        '이메일로 가입하기',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.primaryColor,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // DEV 바로가기
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: _DevButton(
-                              label: '학생',
-                              icon: Icons.school,
-                              color: AppTheme.primaryColor,
-                              onTap: () => context.go('/student'),
-                            ),
+                          Text(
+                            'DEV 바로가기',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _DevButton(
-                              label: '학부모',
-                              icon: Icons.family_restroom,
-                              color: AppTheme.secondaryColor,
-                              onTap: () => context.go('/parent'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _DevButton(
-                              label: '관리자',
-                              icon: Icons.admin_panel_settings,
-                              color: const Color(0xFFE17055),
-                              onTap: () => context.go('/admin'),
-                            ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _DevButton(
+                                  label: '학생',
+                                  icon: Icons.school,
+                                  color: AppTheme.primaryColor,
+                                  onTap: () => context.go('/student'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _DevButton(
+                                  label: '학부모',
+                                  icon: Icons.family_restroom,
+                                  color: AppTheme.secondaryColor,
+                                  onTap: () => context.go('/parent'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _DevButton(
+                                  label: '관리자',
+                                  icon: Icons.admin_panel_settings,
+                                  color: const Color(0xFFE17055),
+                                  onTap: () => context.go('/admin'),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+
+            // 전체 로딩 오버레이 (OAuth 콜백 처리 중)
+            if (authService.isLoading)
+              Container(
+                color: Colors.black26,
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: AppTheme.primaryColor),
+                      SizedBox(height: 16),
+                      Text(
+                        '로그인 처리 중...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
       ),
     );
   }
 
+  Future<void> _signInWithKakao(BuildContext context) async {
+    setState(() {
+      _isSocialLoading = true;
+      _socialLoadingProvider = 'kakao';
+    });
+
+    try {
+      final authService = context.read<AuthService>();
+      await authService.signInWithKakao();
+      // redirect 방식이므로 페이지가 이동됨. 콜백 후 라우트 가드가 자동 리디렉트
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSocialLoading = false;
+          _socialLoadingProvider = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('카카오 로그인 실패: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _signInWithNaver(BuildContext context) async {
+    setState(() {
+      _isSocialLoading = true;
+      _socialLoadingProvider = 'naver';
+    });
+
+    try {
+      final authService = context.read<AuthService>();
+      await authService.signInWithNaver();
+      // redirect 방식이므로 페이지가 이동됨. 콜백 후 라우트 가드가 자동 리디렉트
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSocialLoading = false;
+          _socialLoadingProvider = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('네이버 로그인 실패: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _signInWithGoogle(BuildContext context) async {
+    setState(() {
+      _isSocialLoading = true;
+      _socialLoadingProvider = 'google';
+    });
+
     try {
       final authService = context.read<AuthService>();
       await authService.signInWithGoogle();
       // 라우트 가드가 자동 리디렉트
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Google 로그인 실패: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSocialLoading = false;
+          _socialLoadingProvider = null;
+        });
       }
     }
   }
@@ -222,7 +335,8 @@ class _SocialLoginButton extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final Color? borderColor;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool isLoading;
 
   const _SocialLoginButton({
     required this.label,
@@ -232,6 +346,7 @@ class _SocialLoginButton extends StatelessWidget {
     required this.foregroundColor,
     this.borderColor,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -252,18 +367,27 @@ class _SocialLoginButton extends StatelessWidget {
                 : BorderSide.none,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (iconWidget != null) iconWidget!
-            else if (icon != null) Icon(icon, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+        child: isLoading
+            ? SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: foregroundColor,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (iconWidget != null) iconWidget!
+                  else if (icon != null) Icon(icon, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
       ),
     );
   }
